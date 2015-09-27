@@ -35,6 +35,6 @@ $client->sendMessage($parameters);
 ```
 
 ## TODO:
-[] Write tests
-[] Implement the rest of the API
-[] More documentation!
+- [ ] Write tests
+- [ ] Implement the rest of the API
+- [ ] More documentation!
