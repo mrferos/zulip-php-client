@@ -1,0 +1,24 @@
+{
+    "name": "mrferos/zulip-php",
+    "description": "PHP Zuilip Client",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Zulip\\": "src/"
+        }
+    },
+    "require": {
+        "psr/log": "1.0.0",
+        "guzzlehttp/guzzle": "^6.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.8"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Andres Galindo",
+            "email": "me@andresgalindo.us"
+        }
+    ]
+}
