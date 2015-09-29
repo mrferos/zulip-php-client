@@ -39,6 +39,8 @@ class MessageRequestTest extends \PHPUnit_Framework_TestCase
                         $this->assertArrayHasKey('form_params', $options);
                         $this->assertEquals('test', $options['auth'][0]);
                         $this->assertEquals('test123', $options['auth'][1]);
+
+                        return $this->getMock('\GuzzleHttp\Psr7\Response');
                     });
 
         $params = $this->getMock('\Zulip\Request\ParametersInterface');
