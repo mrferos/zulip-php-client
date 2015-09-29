@@ -1,7 +1,9 @@
 <?php
-namespace Zulip;
+namespace Zulip\Request;
 
-class Response
+use GuzzleHttp\Psr7\Response;
+
+class MessageResponse implements ResponseInterface
 {
     /**
      * @var string
@@ -81,7 +83,7 @@ class Response
         $this->id = $id;
     }
 
-    public static function fromHttpResponse(\GuzzleHttp\Psr7\Response $response)
+    public static function fromHttpResponse(Response $response)
     {
         $body = (string)$response->getBody();
         $data = json_decode($body, true);

@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Zulip\Request\MessageParameters;
 use Zulip\Request\ParametersInterface;
+use Zulip\Request\RegisterQueueParameters;
 use Zulip\Request\RequestInterface;
 use Zulip\Request\ValidationException;
 
@@ -61,6 +62,27 @@ class Client implements LoggerAwareInterface
         }
 
         return $this->createRequest('\Zulip\Request\MessageRequest', $messageParameters);
+    }
+
+    /**
+     * Register a queue with zulip
+     *
+     * @param $queueParameters
+     * @return mixed
+     * @throws ValidationException
+     * @throws \Exception
+     */
+    public function registerQueue($queueParameters)
+    {
+        if (is_array($queueParameters)) {
+            $queueParameters = new RegisterQueueParameters($queueParameters);
+        }
+
+        if (!$queueParameters instanceof RegisterQueueParameters) {
+            throw new \BadMethodCallException('$queueParameters must be an instance of RegisterQueueParameters or an array');
+        }
+
+        return $this->createRequest('\Zulip\Request\RegisterQueueRequest', $queueParameters);
     }
 
     /**

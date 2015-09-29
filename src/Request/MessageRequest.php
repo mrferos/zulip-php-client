@@ -2,13 +2,12 @@
 namespace Zulip\Request;
 
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\RequestOptions;
 use Zulip\Authentication;
-use Zulip\Response;
 
 class MessageRequest extends RequestAbstract
 {
+    use SimpleValidationTrait;
+
     /**
      * @var ClientInterface
      */
@@ -21,7 +20,7 @@ class MessageRequest extends RequestAbstract
 
     public function initialize($serverUrl, ParametersInterface $params, Authentication $defaultAuthentication)
     {
-        $this->validate($params);
+        $this->validate($params, ['type', 'to', 'subject', 'content']);
         $auth = $params->getAuthentication();
         if (empty($auth)) {
             $auth = $defaultAuthentication;
@@ -39,29 +38,6 @@ class MessageRequest extends RequestAbstract
             ]
         );
 
-        return Response::fromHttpResponse($response);
-    }
-
-    /**
-     * @param ParametersInterface $params
-     * @return mixed
-     */
-    protected function validate(ParametersInterface $params)
-    {
-        $requiredKeys = ['type', 'to', 'subject', 'content'];
-        $paramData = $params->getData();
-        foreach (array_keys($paramData) as $key) {
-            $rKey = array_search($key, $requiredKeys);
-            if (false !== $rKey && !empty($paramData[$key])) {
-                unset($requiredKeys[$rKey]);
-            }
-        }
-
-        $missing = array_values($requiredKeys);
-        if (!empty($missing)) {
-            MissingFieldsValidationException::throwException($missing);
-        }
-
-        return true;
+        return MessageResponse::fromHttpResponse($response);
     }
 }
