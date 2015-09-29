@@ -4,7 +4,7 @@ namespace Zulip\Request;
 use GuzzleHttp\ClientInterface;
 use Zulip\Authentication;
 
-class RegisterQueueRequest extends RequestAbstract
+class GetEventsRequest extends RequestAbstract
 {
     use SimpleValidationTrait;
 
@@ -26,34 +26,24 @@ class RegisterQueueRequest extends RequestAbstract
      */
     public function initialize($serverUrl, ParametersInterface $params, Authentication $defaultAuthentication)
     {
-        $this->validate($params, ['event_types']);
+        $this->validate($params, ['queue_id', 'last_event_id']);
         $auth = $params->getAuthentication();
         if (empty($auth)) {
             $auth = $defaultAuthentication;
         }
 
-        $formData = $params->getData();
-        if (empty($formData['event_types'])) {
-            unset($formData['event_types']);
-        } else {
-            $formData['event_types'] = json_encode($formData['event_types']);
-        }
-
-        if (isset($formData['apply_markdown'])) {
-            $formData['apply_markdown'] = $formData['apply_markdown'] === true ? 'true' : 'false';
-        }
 
         $response = $this->httpClient->request('POST',
-            $serverUrl . '/api/v1/register',
+            $serverUrl . '/api/v1/messages',
             [
                 'auth' => [
                     $auth->getUsername(),
                     $auth->getApiKey(),
                 ],
-                'form_params' => $formData
+                'form_params' => $params->getData()
             ]
         );
 
-        return RegisterQueueResponse::fromHttpResponse($response);
+        return MessageResponse::fromHttpResponse($response);
     }
 }

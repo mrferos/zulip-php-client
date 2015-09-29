@@ -6,6 +6,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Zulip\Request\GetEventsParameters;
 use Zulip\Request\MessageParameters;
 use Zulip\Request\ParametersInterface;
 use Zulip\Request\RegisterQueueParameters;
@@ -83,6 +84,27 @@ class Client implements LoggerAwareInterface
         }
 
         return $this->createRequest('\Zulip\Request\RegisterQueueRequest', $queueParameters);
+    }
+
+    /**
+     * Get events for queue
+     *
+     * @param $params
+     * @return mixed
+     * @throws ValidationException
+     * @throws \Exception
+     */
+    public function getEventsFromQueue($params)
+    {
+        if (is_array($params)) {
+            $params = new GetEventsParameters($params);
+        }
+
+        if (!$params instanceof GetEventsParameters) {
+            throw new \BadMethodCallException('$params must be an instance of GetEventsParameters or an array');
+        }
+
+        return $this->createRequest('\Zulip\Request\GetEventsRequest', $params);
     }
 
     /**
