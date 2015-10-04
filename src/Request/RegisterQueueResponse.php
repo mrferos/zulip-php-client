@@ -1,7 +1,7 @@
 <?php
 namespace Zulip\Request;
 
-use GuzzleHttp\Psr7\Response;
+use Psr\Http\Message\ResponseInterface as PsrHttpResponseInterface;
 
 class RegisterQueueResponse implements ResponseInterface
 {
@@ -83,7 +83,7 @@ class RegisterQueueResponse implements ResponseInterface
         $this->result = $result;
     }
 
-    public static function fromHttpResponse(Response $response)
+    public static function fromHttpResponse(PsrHttpResponseInterface $response)
     {
         $body = (string)$response->getBody();
         $data = json_decode($body, true);

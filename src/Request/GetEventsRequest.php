@@ -44,6 +44,6 @@ class GetEventsRequest extends RequestAbstract
             ]
         );
 
-        return MessageResponse::fromHttpResponse($response);
+        return GetEventsResponse::fromHttpResponse($response);
     }
 }
