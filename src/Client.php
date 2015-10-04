@@ -26,7 +26,7 @@ class Client implements LoggerAwareInterface
      */
     private $defaultAuthentication;
     /**
-     * @var
+     * @var string
      */
     private $serverUrl;
 
@@ -127,6 +127,13 @@ class Client implements LoggerAwareInterface
         $this->client = $client;
     }
 
+    /**
+     * @param $class
+     * @param ParametersInterface $parameters
+     * @return mixed
+     * @throws ValidationException
+     * @throws \Exception
+     */
     protected function createRequest($class, ParametersInterface $parameters)
     {
         $this->logger->info("Sending request type: '" . $class. "", ['params' => $parameters->getData()]);
