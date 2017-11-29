@@ -34,7 +34,7 @@ class GetEventsRequest extends RequestAbstract
 
 
         $response = $this->httpClient->request('POST',
-            $serverUrl . '/api/v1/messages',
+            $serverUrl . '/api/v1/events',
             [
                 'auth' => [
                     $auth->getUsername(),
