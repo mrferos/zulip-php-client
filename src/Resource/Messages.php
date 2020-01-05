@@ -4,7 +4,7 @@ namespace Zulip\Resource;
 
 class Messages extends AbstractResource
 {
-    public function retrieve(array $initialParams)
+    public function retrieve(array $initialParams = [])
     {
         $params = $initialParams;
         if (array_key_exists('narrow', $params)) {
