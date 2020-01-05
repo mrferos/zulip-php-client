@@ -1,5 +1,6 @@
 Zulip PHP Client
 ====
+**I am working on a V2 of the client that is more up to date and is actually tested to work, please see the v2 branch for updates** 
 
 Have been playing around with [Zulip](https://zulip.org/) and noticed there was no PHP client... So I made one! 
 
