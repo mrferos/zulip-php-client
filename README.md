@@ -51,3 +51,9 @@ $client->messages->send([
     'content' => "This is a test of the lib functionality [PUPPY](${response['uri']})"
 ]);
 ```
+
+## TODO
+
+- [ ] Write tests
+- [ ] Come up with an auto documentation solution
+- [ ] Implement more of the API

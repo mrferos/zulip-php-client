@@ -1,6 +1,7 @@
 {
     "name": "mrferos/zulip-php",
-    "description": "PHP Zuilip Client",
+    "description": "PHP Zulip Client",
+    "version": "2.0.0-beta",
     "type": "library",
     "autoload": {
         "psr-4": {
