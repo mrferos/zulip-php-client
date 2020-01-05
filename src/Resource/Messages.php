@@ -4,6 +4,22 @@ namespace Zulip\Resource;
 
 class Messages extends AbstractResource
 {
+    public function uploadFile(array $params)
+    {
+        $fileName = $params['filename'];
+        $response = $this->client->post('/api/v1/user_uploads', [
+            'multipart' => [
+                [
+                    'name' => 'FileContents',
+                    'contents' => file_get_contents($fileName),
+                    'filename' => $fileName
+                ]
+            ],
+        ]);
+
+        return new ApiResponse($response);
+    }
+
     public function retrieve(array $initialParams = [])
     {
         $params = $initialParams;
