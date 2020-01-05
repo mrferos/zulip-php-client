@@ -25,9 +25,28 @@ use Zulip\Resource\Users;
  * @property-read Accounts $accounts
  * @property-read Emojis $emojis
  * @property-read Events $events
+ * @property-read Filters $filters
+ * @property-read Queues $queues
+ * @property-read Reactions $reactions
+ * @property-read Server $server
+ * @property-read Streams $streams
+ * @property-read Typing $typing
+ * @property-read Users $users
  */
 class Client
 {
+    const RESOURCE_TYPE_MESSAGES  = 'messages';
+    const RESOURCE_TYPE_ACCOUNTS  = 'accounts';
+    const RESOURCE_TYPE_EMOJIS    = 'emojis';
+    const RESOURCE_TYPE_EVENTS    = 'events';
+    const RESOURCE_TYPE_FILTERS   = 'filters';
+    const RESOURCE_TYPE_QUEUES    = 'queues';
+    const RESOURCE_TYPE_REACTIONS = 'reactions';
+    const RESOURCE_TYPE_SERVER    = 'server';
+    const RESOURCE_TYPE_TYPING    = 'typing';
+    const RESOURCE_TYPE_USERS     = 'users';
+    const RESOURCE_TYPE_STREAMS   = 'streams';
+
     /**
      * @var  Config
      */
@@ -53,6 +72,12 @@ class Client
      */
     private $resources;
 
+    /**
+     * Client constructor.
+     * @param Config|null $config
+     * @param LoggerInterface|null $logger
+     * @throws Exception
+     */
     public function __construct(Config $config = null, LoggerInterface $logger = null)
     {
         if (!is_null($config)) {
@@ -62,18 +87,20 @@ class Client
         $this->logger = $logger ? $logger : new NullLogger();
 
         $client = $this->getClient();
+
+        // @TODO: might consider changing this into a lazy load
         $this->resources = [
-            'messages' => new Messages($client, $this->logger),
-            'accounts' => new Accounts($client, $this->logger),
-            'emojis'   => new Emojis($client, $this->logger),
-            'events'   => new Events($client, $this->logger),
-            'filters'  => new Filters($client, $this->logger),
-            'queues'   => new Queues($client, $this->logger),
-            'reactions' => new Reactions($client, $this->logger),
-            'server' => new Server($client, $this->logger),
-            'streams' => new Streams($client, $this->logger),
-            'typing' => new Typing($client, $this->logger),
-            'users' => new Users($client, $this->logger),
+            self::RESOURCE_TYPE_MESSAGES  => new Messages($client, $this->logger),
+            self::RESOURCE_TYPE_ACCOUNTS  => new Accounts($client, $this->logger),
+            self::RESOURCE_TYPE_EMOJIS    => new Emojis($client, $this->logger),
+            self::RESOURCE_TYPE_EVENTS    => new Events($client, $this->logger),
+            self::RESOURCE_TYPE_FILTERS   => new Filters($client, $this->logger),
+            self::RESOURCE_TYPE_QUEUES    => new Queues($client, $this->logger),
+            self::RESOURCE_TYPE_REACTIONS => new Reactions($client, $this->logger),
+            self::RESOURCE_TYPE_SERVER    => new Server($client, $this->logger),
+            self::RESOURCE_TYPE_STREAMS   => new Streams($client, $this->logger),
+            self::RESOURCE_TYPE_TYPING    => new Typing($client, $this->logger),
+            self::RESOURCE_TYPE_USERS     => new Users($client, $this->logger),
 
         ];
     }
@@ -83,7 +110,12 @@ class Client
         self::$defaultConfig = $config;
     }
 
-    public function __get($resource)
+    /**
+     * @param $resource
+     * @return AbstractResource
+     * @throws Exception
+     */
+    public function getResource($resource)
     {
         if (!array_key_exists($resource, $this->resources)) {
             throw new Exception("Could not find exception of type ${resource}");
@@ -92,6 +124,20 @@ class Client
         return $this->resources[$resource];
     }
 
+    /**
+     * @param $resource
+     * @return AbstractResource
+     * @throws Exception
+     */
+    public function __get($resource)
+    {
+        return $this->getResource($resource);
+    }
+
+    /**
+     * @return HttpClient
+     * @throws Exception
+     */
     private function getClient()
     {
         if (empty($this->client)) {

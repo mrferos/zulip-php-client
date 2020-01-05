@@ -4,7 +4,7 @@ namespace Zulip\Resource;
 
 class Filters extends AbstractResource
 {
-    public function retrieve($params)
+    public function retrieve(array $params = [])
     {
         return $this->get('/realm/filters', $params);
     }

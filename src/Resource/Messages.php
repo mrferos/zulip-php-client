@@ -25,13 +25,14 @@ class Messages extends AbstractResource
         return $this->post('/messages', $params);
     }
 
-    public function update($params)
+    public function update(array $params)
     {
         $endpoint = "/messages/${params['message_id']}";
+        unset($params['message_id']);
         return $this->post($endpoint, $params);
     }
 
-    public function addFlags($initialParams)
+    public function addFlags(array $initialParams)
     {
         $params = $initialParams;
         $params['op'] = 'add';
@@ -42,7 +43,7 @@ class Messages extends AbstractResource
         return $this->post('/messages/flags', $params);
     }
 
-    public function removeFlags($initialParams)
+    public function removeFlags(array $initialParams)
     {
         $params = $initialParams;
         $params['op'] = 'remove';
@@ -53,27 +54,31 @@ class Messages extends AbstractResource
         return $this->post('/messages/flags', $params);
     }
 
-    public function getById($params)
+    public function getById(array $params)
     {
         $endpoint = "/messages/${params['message_id']}";
+        unset($params['message_id']);
         return $this->get($endpoint, $params);
     }
 
-    public function getHistoryById($params)
+    public function getHistoryById(array $params)
     {
         $endpoint = "/messages/${params['message_id']}/history";
+        unset($params['message_id']);
         return $this->get($endpoint, $params);
     }
 
-    public function deleteReactionById($params)
+    public function deleteReactionById(array $params)
     {
         $endpoint = "/messages/${params['message_id']}/reactions";
+        unset($params['message_id']);
         return $this->delete($endpoint, $params);
     }
 
-    public function deleteById($params)
+    public function deleteById(array $params)
     {
         $endpoint = "/messages/${params['message_id']}";
+        unset($params['message_id']);
         return $this->delete($endpoint, $params);
     }
 }
