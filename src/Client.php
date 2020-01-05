@@ -1,171 +1,126 @@
 <?php
+
 namespace Zulip;
 
-use GuzzleHttp\ClientInterface;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
+use GuzzleHttp\Client as HttpClient;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Zulip\Request\GetEventsParameters;
-use Zulip\Request\MessageParameters;
-use Zulip\Request\ParametersInterface;
-use Zulip\Request\RegisterQueueParameters;
-use Zulip\Request\RequestInterface;
-use Zulip\Request\ValidationException;
+use Zulip\Resource\AbstractResource;
+use Zulip\Resource\Accounts;
+use Zulip\Resource\Emojis;
+use Zulip\Resource\Events;
+use Zulip\Resource\Filters;
+use Zulip\Resource\Messages;
+use Zulip\Resource\Queues;
+use Zulip\Resource\Reactions;
+use Zulip\Resource\Server;
+use Zulip\Resource\Streams;
+use Zulip\Resource\Typing;
+use Zulip\Resource\Users;
 
-class Client implements LoggerAwareInterface
+/**
+ * Class Client
+ * @package Zulip
+ * @property-read Messages $messages
+ * @property-read Accounts $accounts
+ * @property-read Emojis $emojis
+ * @property-read Events $events
+ */
+class Client
 {
-    use LoggerAwareTrait;
+    /**
+     * @var  Config
+     */
+    private static $defaultConfig;
 
     /**
-     * @var ClientInterface
+     * @var Config
+     */
+    private $config;
+
+    /**
+     * @var HttpClient
      */
     private $client;
-    /**
-     * @var Authentication
-     */
-    private $defaultAuthentication;
-    /**
-     * @var string
-     */
-    private $serverUrl;
 
-    public function __construct($serverUrl, LoggerInterface $logger = null)
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @var AbstractResource[]
+     */
+    private $resources;
+
+    public function __construct(Config $config = null, LoggerInterface $logger = null)
     {
-        $this->setLogger(is_null($logger) ? new NullLogger() : $logger);
-        $this->serverUrl = $serverUrl;
+        if (!is_null($config)) {
+            $this->config = $config;
+        }
+
+        $this->logger = $logger ? $logger : new NullLogger();
+
+        $client = $this->getClient();
+        $this->resources = [
+            'messages' => new Messages($client, $this->logger),
+            'accounts' => new Accounts($client, $this->logger),
+            'emojis'   => new Emojis($client, $this->logger),
+            'events'   => new Events($client, $this->logger),
+            'filters'  => new Filters($client, $this->logger),
+            'queues'   => new Queues($client, $this->logger),
+            'reactions' => new Reactions($client, $this->logger),
+            'server' => new Server($client, $this->logger),
+            'streams' => new Streams($client, $this->logger),
+            'typing' => new Typing($client, $this->logger),
+            'users' => new Users($client, $this->logger),
+
+        ];
     }
 
-    /**
-     * @param Authentication $defaultAuthentication
-     */
-    public function setDefaultAuthentication($defaultAuthentication)
+    public static function setGlobalConfig(Config $config)
     {
-        $this->defaultAuthentication = $defaultAuthentication;
+        self::$defaultConfig = $config;
     }
 
-    /**
-     * Send message to zulip
-     *
-     * @param array|MessageParameters $messageParameters
-     * @return mixed
-     * @throws ValidationException
-     * @throws \Exception
-     */
-    public function sendMessage($messageParameters)
+    public function __get($resource)
     {
-        if (is_array($messageParameters)) {
-            $messageParameters = new MessageParameters($messageParameters);
+        if (!array_key_exists($resource, $this->resources)) {
+            throw new Exception("Could not find exception of type ${resource}");
         }
 
-        if (!$messageParameters instanceof MessageParameters) {
-            throw new \BadMethodCallException('$messageParameter must be an instance of MessageParameters or an array');
-        }
-
-        return $this->createRequest('\Zulip\Request\MessageRequest', $messageParameters);
+        return $this->resources[$resource];
     }
 
-    /**
-     * Register a queue with zulip
-     *
-     * @param $queueParameters
-     * @return mixed
-     * @throws ValidationException
-     * @throws \Exception
-     */
-    public function registerQueue($queueParameters)
-    {
-        if (is_array($queueParameters)) {
-            $queueParameters = new RegisterQueueParameters($queueParameters);
-        }
-
-        if (!$queueParameters instanceof RegisterQueueParameters) {
-            throw new \BadMethodCallException('$queueParameters must be an instance of RegisterQueueParameters or an array');
-        }
-
-        return $this->createRequest('\Zulip\Request\RegisterQueueRequest', $queueParameters);
-    }
-
-    /**
-     * Get events for queue
-     *
-     * @param $params
-     * @return mixed
-     * @throws ValidationException
-     * @throws \Exception
-     */
-    public function getEventsFromQueue($params)
-    {
-        if (is_array($params)) {
-            $params = new GetEventsParameters($params);
-        }
-
-        if (!$params instanceof GetEventsParameters) {
-            throw new \BadMethodCallException('$params must be an instance of GetEventsParameters or an array');
-        }
-
-        return $this->createRequest('\Zulip\Request\GetEventsRequest', $params);
-    }
-
-    /**
-     * @return ClientInterface
-     */
-    public function getHttpClient()
+    private function getClient()
     {
         if (empty($this->client)) {
-            $this->setHttpClient(new \GuzzleHttp\Client());
+            $config = $this->getConfig();
+            $this->client = new HttpClient([
+                'base_uri' => rtrim($config->getSiteUri(), '/'),
+                'auth' => [$config->getEmail(), $config->getApiKey()]
+            ]);
         }
 
         return $this->client;
     }
 
     /**
-     * @param ClientInterface $client
+     * @return Config
+     * @throws Exception
      */
-    public function setHttpClient($client)
+    private function getConfig()
     {
-        $this->client = $client;
-    }
+        if (empty($this->config)) {
+            if (empty(self::$defaultConfig)) {
+                throw new Exception(
+                    'Configuration has not been set, pass one in the constructor or setConfig()'
+                );
+            }
 
-    /**
-     * @param $class
-     * @param ParametersInterface $parameters
-     * @return mixed
-     * @throws ValidationException
-     * @throws \Exception
-     */
-    protected function createRequest($class, ParametersInterface $parameters)
-    {
-        $this->logger->info("Sending request type: '" . $class. "", ['params' => $parameters->getData()]);
-
-        $authentication = $parameters->getAuthentication();
-        if (is_null($authentication)) {
-            $authentication = $this->defaultAuthentication;
+            return self::$defaultConfig;
         }
 
-        if (!$authentication instanceof Authentication) {
-            throw new \Exception('Missing authentication');
-        }
-
-        try {
-            /** @var RequestInterface $request */
-            $request = new $class($this->getHttpClient());
-            return $request->initialize($this->serverUrl, $parameters, $authentication);
-        }catch(ValidationException $e) {
-            $this->logger->error("Error during validation", [
-                'message' => $e->getMessage(),
-                'errors'  => $e->getErrors(),
-                'params'  => $parameters->getData()
-            ]);
-
-            throw $e;
-        }catch(\Exception $e) {
-            $this->logger->error('Exception occurred', [
-                'message' => $e->getMessage(),
-                'params'  => $parameters->getData()
-            ]);
-
-            throw $e;
-        }
+        return $this->config;
     }
 }
